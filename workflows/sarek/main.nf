@@ -54,6 +54,9 @@ include { VCF_ANNOTATE_ALL                                  } from '../../subwor
 // MULTIQC
 include { MULTIQC                                           } from '../../modules/nf-core/multiqc'
 
+// ANNOVAR
+include { ANNOVAR                                           } from '../../modules/local/annovar/'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -127,6 +130,15 @@ workflow SAREK {
     multiqc_publish = channel.empty()
     multiqc_report = channel.empty()
     reports = channel.empty()
+
+    // Initalize ANNOVAR channel
+    ch_annovar_db = Channel.empty()
+    if (params.run_annovar) {
+        if (!params.annovar_humandb) {
+            error "ANNOVAR is enabled (--run_annovar) but no database directory was provided via --annovar_humandb"
+        }
+        ch_annovar_db = Channel.fromPath(params.annovar_humandb, checkIfExists: true).first()
+    }
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -580,8 +592,19 @@ workflow SAREK {
             versions = versions.mix(VCF_ANNOTATE_ALL.out.versions)
             reports = reports.mix(VCF_ANNOTATE_ALL.out.reports)
         }
-    }
 
+        /// ADDED FOR ANNOVAR: Custom ANNOVAR annotation
+        if (params.run_annovar) {
+            // Safely extract the annotated VCF from the annotation subworkflow
+            ch_vcf_for_annovar = VCF_ANNOTATE_ALL.out.vcf_ann
+
+            ANNOVAR (
+                ch_vcf_for_annovar,
+                ch_annovar_db
+            )
+            versions = versions.mix(ANNOVAR.out.versions.first())
+        }
+    }
     //
     // Collate and save software versions
     //
