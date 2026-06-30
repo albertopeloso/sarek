@@ -9,7 +9,7 @@ process ANNOVAR {
     output:
     tuple val(meta), path("*_multianno.vcf"), emit: vcf          
     tuple val(meta), path("*_multianno.txt"), emit: annotations 
-    tuple val(meta), path("*_Clinical_Report.tsv"), emit: tsv, optional: true  // Registers clean report
+    tuple val(meta), path("*_final_multianno_report.tsv"), emit: tsv, optional: true  // Registers clean report
     path "versions.yml"                     , emit: versions
     
     when:
@@ -20,8 +20,18 @@ process ANNOVAR {
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
+    # 1. Manually decompress the incoming VCF to prevent nested stream contamination
+    if [[ "$vcf" == *.gz ]]; then
+        bgzip -d -c $vcf > local_unzipped_input.vcf
+    else
+        cp $vcf local_unzipped_input.vcf
+    fi
+
+    # 2. Execute ANNOVAR while hard-coding JVM suppression flags to avoid /tmp lock errors
+    _JAVA_OPTIONS="-Xlog:perf+memops=off -XX:+PerfDisableSharedMem -XX:-UsePerfData" \\
+    JAVA_TOOL_OPTIONS="-Xlog:perf+memops=off -XX:+PerfDisableSharedMem -XX:-UsePerfData" \\
     table_annovar.pl \\
-        $vcf \\
+        local_unzipped_input.vcf \\
         $humandb \\
         -out $prefix \\
         -vcfinput \\

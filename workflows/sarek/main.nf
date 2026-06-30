@@ -127,7 +127,7 @@ workflow SAREK {
     main:
     log.info """
     \033[0;36m=======================================================================
-     NF-CORE SAREK v\${workflow.manifest.version} (IRP DIAGNOSTIC REPORTING FORK)
+     NF-CORE SAREK (IRP DIAGNOSTIC REPORTING FORK)
      Maintained by: Alberto Peloso (Padua, 2026)
     =======================================================================\033[0m
     """
