@@ -127,8 +127,8 @@ workflow SAREK {
     main:
     log.info """
     \033[0;36m=======================================================================
-     NF-CORE SAREK (IRP DIAGNOSTIC REPORTING FORK)
-     Maintained by: Alberto Peloso (Padua, 2026)
+     NF-CORE SAREK (IRP DIAGNOSTICS ANALYSIS & REPORTING FORK)
+     Clinical Annotation Extensions - 2026 Alberto Peloso (maintained by)
     =======================================================================\033[0m
     """
 
